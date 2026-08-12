@@ -34,6 +34,12 @@ st.markdown(
       .priority-low {border-left: 5px solid #16a34a;}
       .section-caption {color: #64748b; margin-bottom: .7rem;}
       div[data-testid="stMetric"] {background: #ffffff; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 12px;}
+      .amount-legend {display: flex; justify-content: center; flex-wrap: wrap; gap: .6rem 1rem;
+                      margin: .3rem 0 1rem; color: #cbd5e1; font-size: .9rem;}
+      .amount-legend strong {color: #f8fafc;}
+      .amount-legend span {white-space: nowrap;}
+      .amount-legend i {display: inline-block; width: .72rem; height: .72rem; margin-right: .32rem;
+                         border-radius: 50%; vertical-align: -.05rem;}
     </style>
     """,
     unsafe_allow_html=True,
@@ -147,7 +153,10 @@ def amount_pie_chart(data: pd.DataFrame, metric: str, title: str, currency: bool
     bucket_colors = ["#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#ffd92f"]
     total = chart_data[metric].sum()
     chart_data["Percentage"] = 0 if total == 0 else (chart_data[metric] / total) * 100
-    chart_data["Percentage Label"] = chart_data["Percentage"].map(lambda value: f"{value:.1f}%")
+    # Tiny wedges cannot hold readable text; their exact percentage remains available on hover.
+    chart_data["Percentage Label"] = chart_data["Percentage"].map(
+        lambda value: f"{value:.1f}%" if value >= 3 else ""
+    )
     pie_encoding = {
         "theta": {"field": metric, "type": "quantitative", "stack": True},
         "color": {
@@ -155,16 +164,19 @@ def amount_pie_chart(data: pd.DataFrame, metric: str, title: str, currency: bool
             "type": "nominal",
             "sort": bucket_order,
             "scale": {"domain": bucket_order, "range": bucket_colors},
-            "legend": {"title": "Amount Bucket", "orient": "bottom"},
+            "legend": None,
         },
         "order": {"field": "Display Order", "type": "ordinal"},
     }
     return chart_data, {
-        "title": title,
-        "height": 370,
+        "title": None,
+        "height": 315,
+        "padding": {"top": 10, "bottom": 10, "left": 32, "right": 32},
+        "autosize": {"type": "fit", "contains": "padding"},
+        "config": {"view": {"stroke": None}},
         "layer": [
             {
-                "mark": {"type": "arc", "stroke": "#ffffff", "strokeWidth": 2},
+                "mark": {"type": "arc", "outerRadius": 125, "stroke": "#ffffff", "strokeWidth": 2},
                 "encoding": {
                     **pie_encoding,
                     "tooltip": [
@@ -175,7 +187,7 @@ def amount_pie_chart(data: pd.DataFrame, metric: str, title: str, currency: bool
                 },
             },
             {
-                "mark": {"type": "text", "radius": 105, "fontSize": 15, "fontWeight": "bold", "color": "#1f2937"},
+                "mark": {"type": "text", "radius": 82, "fontSize": 12, "fontWeight": "bold", "color": "#1f2937"},
                 "encoding": {
                     "theta": {"field": metric, "type": "quantitative", "stack": True},
                     "order": {"field": "Display Order", "type": "ordinal"},
@@ -434,11 +446,22 @@ with amount_tab:
     amount_chart["Display Order"] = range(len(amount_chart))
     first, second = st.columns(2)
     with first:
+        st.markdown("##### Transaction count by amount bucket")
         chart_data, chart_spec = amount_pie_chart(amount_chart, "Transaction Count", "Transaction count by amount bucket")
         st.vega_lite_chart(chart_data, chart_spec, use_container_width=True)
     with second:
+        st.markdown("##### Transaction amount by amount bucket")
         chart_data, chart_spec = amount_pie_chart(amount_chart, "Transaction Amount", "Transaction amount by amount bucket", currency=True)
         st.vega_lite_chart(chart_data, chart_spec, use_container_width=True)
+    st.markdown(
+        """<div class="amount-legend"><strong>Amount buckets:</strong>
+        <span><i style="background:#66c2a5"></i>Very Low</span>
+        <span><i style="background:#fc8d62"></i>Low</span>
+        <span><i style="background:#8da0cb"></i>Medium</span>
+        <span><i style="background:#e78ac3"></i>High</span>
+        <span><i style="background:#ffd92f"></i>Very High</span></div>""",
+        unsafe_allow_html=True,
+    )
     st.caption("Charts use amount-bucket labels. Hover for exact transaction counts and dollar amounts.")
     st.subheader("Amount Range Index")
     range_index = amount_summary.reset_index().rename(columns={"AMOUNT_RANGE": "Amount Bucket"})
