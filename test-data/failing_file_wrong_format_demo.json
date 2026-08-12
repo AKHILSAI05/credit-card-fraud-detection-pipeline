@@ -1,1 +1,0 @@
-{"demo_event":"intentional_file_format_failure","message":"This JSON file is deliberately uploaded to a CSV-only landing pipeline to test Bronze failure notification."}
