@@ -37,9 +37,13 @@ outputs/
 data/
 test-data/demo_incremental_batches/
 test-data/*.csv
+!test-data/README.md
 !test-data/failing_file_demo.csv
 !test-data/failing_file_invalid_schema_demo.csv
 !test-data/failing_file_wrong_format_demo.json
+!test-data/demo_invalid_schema_missing_required_columns.csv
+!test-data/demo_invalid_schema_unexpected_columns.csv
+!test-data/demo_invalid_schema_partial_transaction_columns.csv
 
 # Legacy nested workspace; its useful source is tracked after flattening, not its Git metadata.
 fraud-detection-pipeline/.git.legacy-backup/
