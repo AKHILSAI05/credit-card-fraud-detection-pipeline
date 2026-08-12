@@ -140,30 +140,49 @@ def metric_chart(data: pd.DataFrame, category: str, metric: str, title: str, col
 
 
 def amount_pie_chart(data: pd.DataFrame, metric: str, title: str, currency: bool = False) -> tuple[pd.DataFrame, dict]:
-    """Donut chart for the five amount buckets, with exact values on hover."""
+    """Simple pie chart for the five amount buckets, with percentages and exact hover values."""
     chart_data = data.copy()
     chart_data["Amount Bucket"] = chart_data["Amount Range"].astype(str)
     bucket_order = ["Very Low", "Low", "Medium", "High", "Very High"]
-    bucket_colors = ["#38bdf8", "#22c55e", "#f59e0b", "#f97316", "#db2777"]
+    bucket_colors = ["#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#ffd92f"]
+    total = chart_data[metric].sum()
+    chart_data["Percentage"] = 0 if total == 0 else (chart_data[metric] / total) * 100
+    chart_data["Percentage Label"] = chart_data["Percentage"].map(lambda value: f"{value:.1f}%")
+    pie_encoding = {
+        "theta": {"field": metric, "type": "quantitative", "stack": True},
+        "color": {
+            "field": "Amount Bucket",
+            "type": "nominal",
+            "sort": bucket_order,
+            "scale": {"domain": bucket_order, "range": bucket_colors},
+            "legend": {"title": "Amount Bucket", "orient": "bottom"},
+        },
+        "order": {"field": "Display Order", "type": "ordinal"},
+    }
     return chart_data, {
         "title": title,
         "height": 370,
-        "mark": {"type": "arc", "innerRadius": 70, "padAngle": 0.02},
-        "encoding": {
-            "theta": {"field": metric, "type": "quantitative", "stack": True},
-            "color": {
-                "field": "Amount Bucket",
-                "type": "nominal",
-                "sort": bucket_order,
-                "scale": {"domain": bucket_order, "range": bucket_colors},
-                "legend": {"title": "Amount Bucket", "orient": "bottom"},
+        "layer": [
+            {
+                "mark": {"type": "arc", "stroke": "#ffffff", "strokeWidth": 2},
+                "encoding": {
+                    **pie_encoding,
+                    "tooltip": [
+                        {"field": "Amount Bucket", "title": "Amount Bucket"},
+                        {"field": "Percentage Label", "title": "Share"},
+                        {"field": metric, "title": metric, "format": "$,.2f" if currency else ",.0f"},
+                    ],
+                },
             },
-            "order": {"field": "Display Order", "type": "ordinal"},
-            "tooltip": [
-                {"field": "Amount Bucket", "title": "Amount Bucket"},
-                {"field": metric, "title": metric, "format": "$,.2f" if currency else ",.0f"},
-            ],
-        },
+            {
+                "mark": {"type": "text", "radius": 105, "fontSize": 15, "fontWeight": "bold", "color": "#1f2937"},
+                "encoding": {
+                    "theta": {"field": metric, "type": "quantitative", "stack": True},
+                    "order": {"field": "Display Order", "type": "ordinal"},
+                    "text": {"field": "Percentage Label", "type": "nominal"},
+                },
+            },
+        ],
     }
 
 
