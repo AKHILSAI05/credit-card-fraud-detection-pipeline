@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Ask plain-English questions about governed fraud-risk analytics.">
+  <title>Fraud Risk Analytics Assistant</title>
+  <link rel="stylesheet" href="/dark.css?v=3">
+  <style>.sql summary{align-items:center!important;padding:15px 17px!important;font-weight:700!important}.sql summary span:before{content:"▾";margin-right:9px;color:var(--blue)}.sql:not([open]) summary span:before{content:"▸"}.sql summary em{margin-left:8px;color:var(--muted);font-size:11px;font-style:normal;font-weight:400}.sql summary small{color:var(--green)!important;font-weight:600!important}.sql pre{padding:18px!important;overflow:auto}</style>
+  <style>.explore{padding:56px 0 16px;border-top:1px solid var(--line)}.explore-heading{align-items:start}.explore-heading>div:first-child{max-width:560px}.prompt-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.prompt-grid button{text-align:left;padding:18px;min-height:150px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);color:var(--text);display:flex;flex-direction:column;align-items:flex-start}.prompt-grid button:hover{border-color:#5474a8;background:var(--surface-2);transform:translateY(-2px)}.prompt-grid span{color:var(--blue);font-size:10px;font-weight:750;text-transform:uppercase;letter-spacing:.8px}.prompt-grid strong{font-size:15px;line-height:1.35;margin:15px 0 6px}.prompt-grid small{color:var(--muted);margin-top:auto}@media(max-width:850px){.explore-heading{flex-direction:column}.prompt-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:560px){.prompt-grid{grid-template-columns:1fr}.prompt-grid button{min-height:125px}}</style>
+  <style>.result-meta{grid-template-columns:110px 1fr 140px 170px!important}.sql-tools{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:10px 17px;border-top:1px solid var(--line);background:#0f151e}.sql-tools span{color:var(--green);font-size:11px}.copy-sql{padding:7px 11px;font-size:11px}@media(max-width:850px){.result-meta{grid-template-columns:1fr!important}}</style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#ask" aria-label="Fraud Risk Analytics Assistant home">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>Fraud Risk Analytics</span>
+    </a>
+    <span class="connection"><i></i> Read-only Gold data</span>
+  </header>
+
+  <main>
+    <section class="hero" id="ask">
+      <div class="hero-copy">
+        <p class="eyebrow">Analytics assistant</p>
+        <h1>What would you like to know?</h1>
+        <p>Ask in everyday language. The assistant creates one safe, read-only query and returns live Snowflake results.</p>
+      </div>
+
+      <div class="ask-card">
+        <label for="question">Your question</label>
+        <div class="question-row">
+          <input id="question" autocomplete="off" placeholder="For example: Show transaction totals for the latest dates">
+          <button id="run-query" class="primary" type="button">Get answer</button>
+        </div>
+        <div class="examples" aria-label="Example questions">
+          <span>Try:</span>
+          <button type="button" data-question="Show daily transaction count and total transaction amount for the most recent dates">Latest daily totals</button>
+          <button type="button" data-question="Compare review priorities by time segment">Priority by time</button>
+          <button type="button" data-question="Show high-priority Morning transactions above $500 ordered by review score">Morning reviews above $500</button>
+        </div>
+        <div id="query-message" class="query-message" role="status" aria-live="polite">Ready for a question</div>
+      </div>
+
+      <div class="how-it-works" aria-label="How the assistant works">
+        <div><b>1</b><span><strong>Ask a question</strong><small>Use plain English</small></span></div>
+        <div><b>2</b><span><strong>Safety check</strong><small>Approved Gold data only</small></span></div>
+        <div><b>3</b><span><strong>See the answer</strong><small>Table, chart and CSV</small></span></div>
+      </div>
+    </section>
+
+    <section class="answer hidden" id="answer" aria-labelledby="answer-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Answer</p>
+          <h2 id="answer-title">Query results</h2>
+        </div>
+        <div class="answer-actions">
+          <span id="status" class="status">Ready</span>
+          <button id="download-csv" class="secondary download" type="button" disabled>Download filtered CSV</button>
+        </div>
+      </div>
+
+      <div class="result-meta">
+        <div><span>Rows</span><strong id="row-count">—</strong></div>
+        <div><span>Source</span><strong id="data-source">Approved Gold analytics</strong></div>
+        <div><span>Access</span><strong>Read only</strong></div>
+        <div><span>Latest Gold data</span><strong id="data-freshness">Checking…</strong></div>
+      </div>
+
+      <div class="result-grid">
+        <div class="panel chart-panel">
+          <div class="panel-head"><h3>Visual summary</h3><span>Based on this result</span></div>
+          <div class="chart" aria-label="Chart of query results"></div>
+        </div>
+        <div class="panel table-panel results">
+          <div class="panel-head"><h3>Data</h3><span id="result-kind">Live Snowflake result</span></div>
+          <div class="table-scroll"><table><thead></thead><tbody></tbody></table></div>
+        </div>
+      </div>
+
+      <details class="sql panel" open>
+        <summary><span>Generated SQL <em>Click to show or hide</em></span><small id="sqlstatus">Validated server-side</small></summary>
+        <div class="sql-tools"><span id="copy-status" role="status" aria-live="polite"></span><button id="copy-sql" class="secondary copy-sql" type="button">Copy SQL</button></div>
+        <pre></pre>
+      </details>
+    </section>
+
+    <section class="explore" aria-labelledby="explore-title">
+      <div class="section-heading explore-heading">
+        <div>
+          <p class="eyebrow">Explore more</p>
+          <h2 id="explore-title">Useful questions to try</h2>
+          <p>Choose a question to run it against live approved Gold analytics.</p>
+        </div>
+        <div class="disclaimer"><strong>Review Priority is not a fraud decision.</strong> It only organises review work. Historical labels are retrospective validation, never prediction.</div>
+      </div>
+      <div class="prompt-grid">
+        <button type="button" data-question="Show transaction count, total amount, and average amount for the 10 most recent transaction dates"><span>Daily trends</span><strong>Review recent transaction activity</strong><small>Dates, volume and value</small></button>
+        <button type="button" data-question="Compare transaction count, total amount, and high review-priority count across every amount range"><span>Amount patterns</span><strong>Compare transaction ranges</strong><small>Volume, value and priority</small></button>
+        <button type="button" data-question="Compare transaction count and total amount across Morning, Afternoon, Evening, and Night"><span>Time patterns</span><strong>See activity throughout the day</strong><small>Morning through Night</small></button>
+        <button type="button" data-question="Show the 20 largest transactions with their amount range, review score, review priority, and time segment"><span>Review signals</span><strong>Inspect high-value records</strong><small>Live analyst-facing details</small></button>
+      </div>
+    </section>
+  </main>
+
+  <footer>Fraud Risk Analytics Assistant · Governed analytics workspace</footer>
+  <script src="/app.js?v=3"></script>
+</body>
+</html>

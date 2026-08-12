@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="1330" viewBox="0 0 2000 1330">
+  <defs>
+    <style>
+      .bg{fill:#f8fafc}.title{font:700 35px Arial,sans-serif;fill:#102a43}.subtitle{font:16px Arial,sans-serif;fill:#486581}.head{font:700 19px Arial,sans-serif;fill:#102a43}.body{font:15px Arial,sans-serif;fill:#243b53}.small{font:13px Arial,sans-serif;fill:#334e68}.tiny{font:12px Arial,sans-serif;fill:#486581}.white{fill:#fff}.card{fill:#fff;stroke:#bcccdc;stroke-width:2}.aws{fill:#fff7e6;stroke:#e8a529;stroke-width:2}.dbx{fill:#fff1ee;stroke:#e45135;stroke-width:2}.snow{fill:#eef7ff;stroke:#2b79c2;stroke-width:2}.gold{fill:#eefbf3;stroke:#2c9a5b;stroke-width:2}.dag{fill:#f4efff;stroke:#7655b5;stroke-width:3}.support{fill:#f5f7fa;stroke:#829ab1;stroke-width:2}.line{stroke:#526d82;stroke-width:3;fill:none}.dash{stroke:#7655b5;stroke-width:2.5;stroke-dasharray:8 7;fill:none}.divider{stroke:#d9e2ec;stroke-width:1.5}.badge{fill:#102a43}.badgeText{font:700 12px Arial,sans-serif;fill:#fff}.chip{fill:#d9e2ec}.legend{font:13px Arial,sans-serif;fill:#334e68}
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#526d82"/></marker>
+    <marker id="arrowDash" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#7655b5"/></marker>
+  </defs>
+  <rect class="bg" width="2000" height="1330"/>
+  <text x="1000" y="60" class="title" text-anchor="middle">Credit Card Fraud Detection — Final End-to-End Architecture</text>
+  <text x="1000" y="90" class="subtitle" text-anchor="middle">Automated ingestion, governed transformation, duplicate prevention, auditability, analyst-ready reporting</text>
+
+  <!-- Top data path -->
+  <rect x="45" y="150" width="220" height="285" rx="18" class="card"/>
+  <text x="155" y="188" text-anchor="middle" class="head">1. Source Dataset</text>
+  <line x1="70" y1="205" x2="240" y2="205" class="divider"/>
+  <text x="75" y="235" class="body">Kaggle / ULB</text><text x="75" y="260" class="body">Credit Card Fraud CSV</text>
+  <rect x="70" y="290" width="170" height="88" rx="10" class="support"/>
+  <text x="85" y="320" class="small">Columns</text><text x="85" y="345" class="tiny">Time | V1–V28 | Amount | Class</text><text x="85" y="365" class="tiny">Class = historical label only</text>
+  <text x="75" y="410" class="tiny">• Immutable source file</text><text x="75" y="428" class="tiny">• No customer/card identifiers</text>
+
+  <rect x="315" y="150" width="265" height="285" rx="18" class="aws"/>
+  <text x="447" y="188" text-anchor="middle" class="head">2. AWS S3 Data Lake</text>
+  <line x1="340" y1="205" x2="555" y2="205" class="divider"/>
+  <text x="340" y="234" class="small">Bucket: intern-final-project-fraud-detection</text>
+  <rect x="345" y="250" width="205" height="42" rx="9" class="white"/><text x="360" y="277" class="body">landing/ — new CSV files</text>
+  <rect x="345" y="305" width="205" height="42" rx="9" class="white"/><text x="360" y="332" class="body">archive/ — successful files</text>
+  <rect x="345" y="360" width="205" height="50" rx="9" class="white"/><text x="360" y="383" class="body">reject/duplicates/</text><text x="360" y="402" class="tiny">reject/validation_failed/</text>
+
+  <rect x="630" y="150" width="290" height="285" rx="18" class="dbx"/>
+  <text x="775" y="188" text-anchor="middle" class="head">3. Databricks Bronze</text>
+  <text x="775" y="213" text-anchor="middle" class="small">Unity Catalog: workspace.bronze</text>
+  <line x1="655" y1="225" x2="895" y2="225" class="divider"/>
+  <rect x="655" y="242" width="240" height="45" rx="9" class="white"/><text x="670" y="270" class="body">transactions_raw</text>
+  <text x="655" y="315" class="tiny">• Reads one parameterized S3 file</text><text x="655" y="335" class="tiny">• Preserves every source row</text><text x="655" y="355" class="tiny">• Adds lineage: batch_id, source_file,</text><text x="670" y="373" class="tiny">source_s3_uri, load_ts, ingestion_date</text><text x="655" y="401" class="tiny">• Content SHA-256 + file ETag captured</text>
+
+  <rect x="970" y="150" width="290" height="285" rx="18" class="dbx"/>
+  <text x="1115" y="188" text-anchor="middle" class="head">4. Databricks Silver</text>
+  <text x="1115" y="213" text-anchor="middle" class="small">Unity Catalog: workspace.silver</text>
+  <line x1="995" y1="225" x2="1235" y2="225" class="divider"/>
+  <rect x="995" y="242" width="240" height="45" rx="9" class="white"/><text x="1010" y="270" class="body">transactions_silver_incremental</text>
+  <text x="995" y="315" class="tiny">• Standardise types and create timestamp</text><text x="995" y="335" class="tiny">• Remove exact duplicate transactions</text><text x="995" y="355" class="tiny">• Create amount/time/risk features</text><text x="995" y="375" class="tiny">• Labels retained only for historical checks</text><text x="995" y="405" class="tiny">• Same batch cannot transform twice</text>
+
+  <rect x="1310" y="150" width="250" height="285" rx="18" class="snow"/>
+  <text x="1435" y="188" text-anchor="middle" class="head">5. Snowflake RAW</text>
+  <text x="1435" y="213" text-anchor="middle" class="small">FRAUD_DB.RAW</text>
+  <line x1="1335" y1="225" x2="1535" y2="225" class="divider"/>
+  <rect x="1335" y="242" width="200" height="45" rx="9" class="white"/><text x="1350" y="270" class="body">TRANSACTIONS</text>
+  <text x="1335" y="315" class="tiny">• Guarded append per batch + file</text><text x="1335" y="335" class="tiny">• Silver→RAW count reconciliation</text><text x="1335" y="355" class="tiny">• Audit fields remain traceable</text><text x="1335" y="375" class="tiny">• Cross-platform serving layer</text>
+
+  <rect x="1610" y="150" width="345" height="285" rx="18" class="gold"/>
+  <text x="1783" y="188" text-anchor="middle" class="head">6. Snowflake Gold / Analytics</text>
+  <text x="1783" y="213" text-anchor="middle" class="small">FRAUD_DB.ANALYTICS</text>
+  <line x1="1635" y1="225" x2="1930" y2="225" class="divider"/>
+  <text x="1640" y="253" class="small">Gold tables</text>
+  <text x="1640" y="276" class="tiny">• FRAUD_DAILY_SUMMARY</text><text x="1640" y="297" class="tiny">• AMOUNT_BUCKET_SUMMARY</text><text x="1640" y="318" class="tiny">• RISK_TIME_DASHBOARD</text>
+  <text x="1640" y="348" class="small">Gold view</text><text x="1640" y="370" class="tiny">• ANALYST_REVIEW_QUEUE</text>
+  <text x="1640" y="405" class="tiny">Refresh: ANALYTICS.REFRESH_FRAUD_GOLD()</text>
+
+  <!-- arrows -->
+  <path d="M265 292 L315 292" class="line" marker-end="url(#arrow)"/><path d="M580 292 L630 292" class="line" marker-end="url(#arrow)"/><path d="M920 292 L970 292" class="line" marker-end="url(#arrow)"/><path d="M1260 292 L1310 292" class="line" marker-end="url(#arrow)"/><path d="M1560 292 L1610 292" class="line" marker-end="url(#arrow)"/>
+
+  <!-- Consumer -->
+  <rect x="700" y="485" width="600" height="150" rx="18" class="gold"/>
+  <text x="1000" y="525" text-anchor="middle" class="head">7. Business Consumption — Snowflake Native Streamlit</text>
+  <text x="1000" y="553" text-anchor="middle" class="body">fraud_risk_dashboard</text>
+  <text x="735" y="584" class="tiny">Interactive filters: review priority, time segment, time window, amount range, date range, transaction ID</text>
+  <text x="735" y="608" class="tiny">Cards, summary dashboards, amount analysis, risk/time trends, top-100 review queue, export/download</text>
+  <path d="M1783 435 L1783 465 L1300 465 L1300 520" class="line" marker-end="url(#arrow)"/>
+
+  <!-- Dagster -->
+  <rect x="45" y="700" width="1910" height="250" rx="20" class="dag"/>
+  <text x="1000" y="742" text-anchor="middle" class="head">Mandatory Orchestration and Operational Control — Local Dagster</text>
+  <text x="1000" y="768" text-anchor="middle" class="small">fraud_pipeline_job • landing_file_sensor polls S3 every ~30 seconds • one file per eligible run</text>
+  <rect x="80" y="800" width="205" height="75" rx="12" class="white"/><text x="182" y="830" text-anchor="middle" class="body">landing_file_sensor</text><text x="182" y="853" text-anchor="middle" class="tiny">S3 list + object metadata + SHA-256</text>
+  <rect x="330" y="800" width="190" height="75" rx="12" class="white"/><text x="425" y="830" text-anchor="middle" class="body">run_bronze</text><text x="425" y="853" text-anchor="middle" class="tiny">Databricks Job</text>
+  <rect x="565" y="800" width="190" height="75" rx="12" class="white"/><text x="660" y="830" text-anchor="middle" class="body">run_silver</text><text x="660" y="853" text-anchor="middle" class="tiny">Databricks Job</text>
+  <rect x="800" y="800" width="230" height="75" rx="12" class="white"/><text x="915" y="830" text-anchor="middle" class="body">load_snowflake_raw</text><text x="915" y="853" text-anchor="middle" class="tiny">guarded RAW append</text>
+  <rect x="1075" y="800" width="220" height="75" rx="12" class="white"/><text x="1185" y="830" text-anchor="middle" class="body">validate_snowflake_raw</text><text x="1185" y="853" text-anchor="middle" class="tiny">Silver ↔ RAW reconciliation</text>
+  <rect x="1340" y="800" width="180" height="75" rx="12" class="white"/><text x="1430" y="830" text-anchor="middle" class="body">refresh_gold</text><text x="1430" y="853" text-anchor="middle" class="tiny">Snowflake procedure</text>
+  <rect x="1565" y="800" width="345" height="75" rx="12" class="white"/><text x="1738" y="830" text-anchor="middle" class="body">archive_processed_file</text><text x="1738" y="853" text-anchor="middle" class="tiny">copy to archive/ then remove from landing/</text>
+  <path d="M285 838 L330 838 M520 838 L565 838 M755 838 L800 838 M1030 838 L1075 838 M1295 838 L1340 838 M1520 838 L1565 838" class="line" marker-end="url(#arrow)"/>
+  <text x="100" y="916" class="tiny">Retries, failure logs, run IDs, batch metadata, alerts, job dependency protection</text>
+
+  <!-- support -->
+  <rect x="45" y="1010" width="440" height="235" rx="18" class="support"/>
+  <text x="265" y="1045" text-anchor="middle" class="head">Audit, Validation &amp; Reconciliation</text>
+  <text x="70" y="1080" class="small">Audit tables</text><text x="70" y="1103" class="tiny">• workspace.ops.processed_files (Bronze)</text><text x="70" y="1125" class="tiny">• workspace.ops.silver_processed_batches (Silver)</text>
+  <text x="70" y="1155" class="small">Validation notebooks</text><text x="70" y="1178" class="tiny">• Bronze: source count, nulls, values, duplicate checks</text><text x="70" y="1200" class="tiny">• Silver: deduplication, feature and count checks</text><text x="70" y="1222" class="tiny">• Snowflake: Silver ↔ RAW reconciliation</text>
+
+  <rect x="535" y="1010" width="440" height="235" rx="18" class="support"/>
+  <text x="755" y="1045" text-anchor="middle" class="head">Duplicate &amp; Failure Controls</text>
+  <text x="560" y="1080" class="tiny">1. Sensor cursor prevents repeat S3 object events.</text><text x="560" y="1103" class="tiny">2. Filename/source URI audit prevents repeat file loads.</text><text x="560" y="1126" class="tiny">3. SHA-256 detects identical content under a new name.</text><text x="560" y="1149" class="tiny">4. Bronze preserves all rows; Silver removes exact row duplicates.</text><text x="560" y="1172" class="tiny">5. Snowflake guarded append prevents repeated batch/file loads.</text><text x="560" y="1202" class="tiny">Duplicate → reject/duplicates/</text><text x="560" y="1224" class="tiny">Validation or pipeline failure → reject/validation_failed/</text>
+
+  <rect x="1025" y="1010" width="440" height="235" rx="18" class="support"/>
+  <text x="1245" y="1045" text-anchor="middle" class="head">Security &amp; Configuration</text>
+  <text x="1050" y="1080" class="tiny">• AWS IAM least-privilege: list landing; read landing;</text><text x="1064" y="1100" class="tiny">write archive/reject; delete only processed landing objects</text>
+  <text x="1050" y="1130" class="tiny">• Databricks external location / IAM role for S3 access</text><text x="1050" y="1153" class="tiny">• Databricks PAT, AWS keys and Snowflake password in .env / secrets</text><text x="1050" y="1176" class="tiny">• Never commit .env, tokens, passwords or access keys to Git</text><text x="1050" y="1208" class="tiny">• Databricks Jobs receive parameterised values, not hardcoded inputs</text>
+
+  <rect x="1515" y="1010" width="440" height="235" rx="18" class="support"/>
+  <text x="1735" y="1045" text-anchor="middle" class="head">Tools Used</text>
+  <text x="1540" y="1080" class="body">AWS S3 + IAM</text><text x="1540" y="1110" class="body">Databricks Free Edition + Unity Catalog + Jobs</text><text x="1540" y="1140" class="body">Snowflake + SQL + Stored Procedure</text><text x="1540" y="1170" class="body">Snowflake Native Streamlit</text><text x="1540" y="1200" class="body">Dagster + Python + boto3 + REST APIs</text><text x="1540" y="1228" class="body">GitHub, VS Code, Notion, PowerPoint</text>
+
+  <!-- Dashed orchestration dependencies -->
+  <path d="M182 800 L182 585 L445 585" class="dash" marker-end="url(#arrowDash)"/><path d="M425 800 L775 435" class="dash" marker-end="url(#arrowDash)"/><path d="M660 800 L1115 435" class="dash" marker-end="url(#arrowDash)"/><path d="M915 800 L1435 435" class="dash" marker-end="url(#arrowDash)"/><path d="M1430 800 L1783 435" class="dash" marker-end="url(#arrowDash)"/>
+  <line x1="55" y1="1285" x2="105" y2="1285" class="line" marker-end="url(#arrow)"/><text x="115" y="1290" class="legend">Solid arrow = data flow / controlled step dependency</text><line x1="630" y1="1285" x2="680" y2="1285" class="dash" marker-end="url(#arrowDash)"/><text x="690" y="1290" class="legend">Dashed arrow = Dagster orchestration trigger</text><text x="1260" y="1290" class="legend">Final design as of 10 Aug 2026</text>
+</svg>

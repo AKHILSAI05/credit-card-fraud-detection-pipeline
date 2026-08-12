@@ -1,0 +1,49 @@
+# Secrets and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p8
+credentials.json
+
+# Python and application runtimes
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+env/
+*.egg-info/
+*.log
+
+# Dagster local state
+dagster_home/
+.tmp_dagster_home_*/
+
+# Generated, temporary, and local tool artifacts
+.tmp*/
+_tmp/
+tmp/
+work/
+outputs/render-tmp/
+*.tmp
+**/.pnpm-store/
+**/~$*.docx
+*.inspect.ndjson
+
+# Large local source data and generated batches. Use documented samples only.
+data/
+test-data/demo_incremental_batches/
+test-data/*.csv
+!test-data/failing_file_demo.csv
+!test-data/failing_file_invalid_schema_demo.csv
+!test-data/failing_file_wrong_format_demo.json
+
+# Legacy nested workspace; its useful source is tracked after flattening, not its Git metadata.
+fraud-detection-pipeline/.git.legacy-backup/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/

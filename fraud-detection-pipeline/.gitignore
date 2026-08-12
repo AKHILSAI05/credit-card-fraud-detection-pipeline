@@ -1,0 +1,27 @@
+# Secrets and local settings
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Data and run artifacts
+data/
+*.csv
+*.parquet
+*.delta
+logs/
+outputs/
+
+# Python and editor files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+.vscode/
+.idea/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
