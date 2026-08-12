@@ -161,9 +161,9 @@ def amount_pie_comparison_chart(data: pd.DataFrame) -> tuple[pd.DataFrame, dict]
         total = chart_frame["Value"].sum()
         chart_frame["Percentage"] = 0 if total == 0 else (chart_frame["Value"] / total) * 100
         chart_frame["Percentage Tooltip"] = chart_frame["Percentage"].map(lambda value: f"{value:.1f}%")
-        chart_frame["Percentage Label"] = chart_frame["Percentage"].map(lambda value: f"{value:.1f}%")
-        chart_frame["Label Position"] = chart_frame["Percentage"].map(
-            lambda value: "Outside" if 3 <= value < 7 else "Inside"
+        # Display a label only when the wedge is wide enough to keep it inside the donut.
+        chart_frame["Percentage Label"] = chart_frame["Percentage"].map(
+            lambda value: f"{value:.1f}%" if value >= 7 else ""
         )
         chart_frames.append(chart_frame)
     chart_data = pd.concat(chart_frames, ignore_index=True)
@@ -190,6 +190,7 @@ def amount_pie_comparison_chart(data: pd.DataFrame) -> tuple[pd.DataFrame, dict]
                     "mark": {
                         "type": "arc",
                         "outerRadius": 112,
+                        "innerRadius": 54,
                         "stroke": "#ffffff",
                         "strokeWidth": 1,
                     },
@@ -203,17 +204,7 @@ def amount_pie_comparison_chart(data: pd.DataFrame) -> tuple[pd.DataFrame, dict]
                     },
                 },
                 {
-                    "mark": {"type": "text", "radius": 66, "fontSize": 12, "fontWeight": "bold", "color": "#1f2937"},
-                    "transform": [{"filter": "datum['Label Position'] === 'Inside'"}],
-                    "encoding": {
-                        "theta": {"field": "Value", "type": "quantitative", "stack": True},
-                        "order": {"field": "Display Order", "type": "ordinal"},
-                        "text": {"field": "Percentage Label", "type": "nominal"},
-                    },
-                },
-                {
-                    "mark": {"type": "text", "radius": 136, "fontSize": 12, "fontWeight": "bold", "color": "#f8fafc"},
-                    "transform": [{"filter": "datum['Label Position'] === 'Outside'"}],
+                    "mark": {"type": "text", "radius": 82, "fontSize": 12, "fontWeight": "bold", "color": "#1f2937"},
                     "encoding": {
                         "theta": {"field": "Value", "type": "quantitative", "stack": True},
                         "order": {"field": "Display Order", "type": "ordinal"},
