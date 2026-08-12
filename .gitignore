@@ -27,6 +27,7 @@ _tmp/
 tmp/
 work/
 outputs/render-tmp/
+outputs/
 *.tmp
 **/.pnpm-store/
 **/~$*.docx
