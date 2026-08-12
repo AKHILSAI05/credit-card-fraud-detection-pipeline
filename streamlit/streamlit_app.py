@@ -383,7 +383,6 @@ with amount_tab:
     amount_summary["Low Amount"] = filtered_df.groupby("AMOUNT_RANGE")["TRANSACTION_AMOUNT"].min()
     amount_summary["High Amount"] = filtered_df.groupby("AMOUNT_RANGE")["TRANSACTION_AMOUNT"].max()
     amount_chart = amount_summary.reset_index().rename(columns={"AMOUNT_RANGE": "Amount Range", "Transaction_Count": "Transaction Count", "Transaction_Amount": "Transaction Amount"})
-    amount_chart["Amount Range"] = amount_chart.apply(lambda row: f"{row['Amount Range']} (${row['Low Amount']:,.0f}–${row['High Amount']:,.0f})", axis=1)
     amount_chart["Amount Range"] = amount_summary.index.astype(str)
     first, second = st.columns(2)
     with first:
@@ -392,17 +391,21 @@ with amount_tab:
     with second:
         chart_data, chart_spec = metric_chart(amount_chart, "Amount Range", "Transaction Amount", "Transaction amount by amount range", "#db2777", currency=True)
         st.vega_lite_chart(chart_data, chart_spec, use_container_width=True)
-    st.caption("Amount-range labels show the observed low-to-high value range after filters. Hover for exact transaction counts and dollar amounts.")
+    st.caption("Charts use amount-bucket labels. Hover for exact transaction counts and dollar amounts.")
     st.subheader("Amount Range Index")
-    range_index = amount_summary.reset_index().rename(columns={"AMOUNT_RANGE": "Amount Range"})
+    range_index = amount_summary.reset_index().rename(columns={"AMOUNT_RANGE": "Amount Bucket"})
+    range_index["Amount Range"] = range_index.apply(
+        lambda row: (
+            "No transactions after filters"
+            if pd.isna(row["Low Amount"]) or pd.isna(row["High Amount"])
+            else f"${row['Low Amount']:,.2f} to ${row['High Amount']:,.2f}"
+        ),
+        axis=1,
+    )
     st.dataframe(
-        range_index[["Amount Range", "Low Amount", "High Amount"]],
+        range_index[["Amount Bucket", "Amount Range"]],
         use_container_width=True,
         hide_index=True,
-        column_config={
-            "Low Amount": st.column_config.NumberColumn(format="$%.2f"),
-            "High Amount": st.column_config.NumberColumn(format="$%.2f"),
-        },
     )
     st.subheader("Amount Range Summary")
     amount_summary["Transaction Amount (K)"] = amount_summary["Transaction_Amount"] / 1_000
