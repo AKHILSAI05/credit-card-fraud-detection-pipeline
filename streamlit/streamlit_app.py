@@ -179,7 +179,12 @@ def amount_pie_comparison_chart(data: pd.DataFrame) -> tuple[pd.DataFrame, dict]
             "transform": [{"filter": f"datum['Metric Title'] === '{title}'"}],
             "layer": [
                 {
-                    "mark": {"type": "arc", "outerRadius": 126, "stroke": "#ffffff", "strokeWidth": 2},
+                    "mark": {
+                        "type": "arc",
+                        "outerRadius": 126,
+                        "stroke": "#ffffff",
+                        "strokeWidth": 1,
+                    },
                     "encoding": {
                         **base_encoding,
                         "tooltip": [
