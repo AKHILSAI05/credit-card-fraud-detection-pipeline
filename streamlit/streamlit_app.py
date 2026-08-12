@@ -139,6 +139,34 @@ def metric_chart(data: pd.DataFrame, category: str, metric: str, title: str, col
     }
 
 
+def amount_pie_chart(data: pd.DataFrame, metric: str, title: str, currency: bool = False) -> tuple[pd.DataFrame, dict]:
+    """Donut chart for the five amount buckets, with exact values on hover."""
+    chart_data = data.copy()
+    chart_data["Amount Bucket"] = chart_data["Amount Range"].astype(str)
+    bucket_order = ["Very Low", "Low", "Medium", "High", "Very High"]
+    bucket_colors = ["#38bdf8", "#22c55e", "#f59e0b", "#f97316", "#db2777"]
+    return chart_data, {
+        "title": title,
+        "height": 370,
+        "mark": {"type": "arc", "innerRadius": 70, "padAngle": 0.02},
+        "encoding": {
+            "theta": {"field": metric, "type": "quantitative", "stack": True},
+            "color": {
+                "field": "Amount Bucket",
+                "type": "nominal",
+                "sort": bucket_order,
+                "scale": {"domain": bucket_order, "range": bucket_colors},
+                "legend": {"title": "Amount Bucket", "orient": "bottom"},
+            },
+            "order": {"field": "Display Order", "type": "ordinal"},
+            "tooltip": [
+                {"field": "Amount Bucket", "title": "Amount Bucket"},
+                {"field": metric, "title": metric, "format": "$,.2f" if currency else ",.0f"},
+            ],
+        },
+    }
+
+
 def priority_mix_chart(data: pd.DataFrame, dimension: str, title: str) -> tuple[pd.DataFrame, dict]:
     """100% stacked view keeps small priority groups visible despite count imbalance."""
     counts = priority_counts(data, dimension).reset_index()
@@ -384,12 +412,13 @@ with amount_tab:
     amount_summary["High Amount"] = filtered_df.groupby("AMOUNT_RANGE")["TRANSACTION_AMOUNT"].max()
     amount_chart = amount_summary.reset_index().rename(columns={"AMOUNT_RANGE": "Amount Range", "Transaction_Count": "Transaction Count", "Transaction_Amount": "Transaction Amount"})
     amount_chart["Amount Range"] = amount_summary.index.astype(str)
+    amount_chart["Display Order"] = range(len(amount_chart))
     first, second = st.columns(2)
     with first:
-        chart_data, chart_spec = metric_chart(amount_chart, "Amount Range", "Transaction Count", "Transaction count by amount range", "#f97316")
+        chart_data, chart_spec = amount_pie_chart(amount_chart, "Transaction Count", "Transaction count by amount bucket")
         st.vega_lite_chart(chart_data, chart_spec, use_container_width=True)
     with second:
-        chart_data, chart_spec = metric_chart(amount_chart, "Amount Range", "Transaction Amount", "Transaction amount by amount range", "#db2777", currency=True)
+        chart_data, chart_spec = amount_pie_chart(amount_chart, "Transaction Amount", "Transaction amount by amount bucket", currency=True)
         st.vega_lite_chart(chart_data, chart_spec, use_container_width=True)
     st.caption("Charts use amount-bucket labels. Hover for exact transaction counts and dollar amounts.")
     st.subheader("Amount Range Index")
