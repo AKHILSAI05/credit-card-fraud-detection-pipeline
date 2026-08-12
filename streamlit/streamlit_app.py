@@ -34,12 +34,6 @@ st.markdown(
       .priority-low {border-left: 5px solid #16a34a;}
       .section-caption {color: #64748b; margin-bottom: .7rem;}
       div[data-testid="stMetric"] {background: #ffffff; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 12px;}
-      .amount-legend {display: flex; justify-content: center; flex-wrap: wrap; gap: .6rem 1rem;
-                      margin: .3rem 0 1rem; color: #cbd5e1; font-size: .9rem;}
-      .amount-legend strong {color: #f8fafc;}
-      .amount-legend span {white-space: nowrap;}
-      .amount-legend i {display: inline-block; width: .72rem; height: .72rem; margin-right: .32rem;
-                         border-radius: 50%; vertical-align: -.05rem;}
     </style>
     """,
     unsafe_allow_html=True,
@@ -145,56 +139,75 @@ def metric_chart(data: pd.DataFrame, category: str, metric: str, title: str, col
     }
 
 
-def amount_pie_chart(data: pd.DataFrame, metric: str, title: str, currency: bool = False) -> tuple[pd.DataFrame, dict]:
-    """Simple pie chart for the five amount buckets, with percentages and exact hover values."""
-    chart_data = data.copy()
-    chart_data["Amount Bucket"] = chart_data["Amount Range"].astype(str)
+def amount_pie_comparison_chart(data: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
+    """One aligned chart composition containing count and amount pies with a shared legend."""
     bucket_order = ["Very Low", "Low", "Medium", "High", "Very High"]
     bucket_colors = ["#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#ffd92f"]
-    total = chart_data[metric].sum()
-    chart_data["Percentage"] = 0 if total == 0 else (chart_data[metric] / total) * 100
-    # Tiny wedges cannot hold readable text; their exact percentage remains available on hover.
-    chart_data["Percentage Label"] = chart_data["Percentage"].map(
-        lambda value: f"{value:.1f}%" if value >= 3 else ""
-    )
-    pie_encoding = {
-        "theta": {"field": metric, "type": "quantitative", "stack": True},
-        "color": {
-            "field": "Amount Bucket",
-            "type": "nominal",
-            "sort": bucket_order,
-            "scale": {"domain": bucket_order, "range": bucket_colors},
-            "legend": None,
-        },
-        "order": {"field": "Display Order", "type": "ordinal"},
-    }
+    chart_frames = []
+    for title, metric, currency in [
+        ("Transaction count by amount bucket", "Transaction Count", False),
+        ("Transaction amount by amount bucket", "Transaction Amount", True),
+    ]:
+        chart_frame = data[["Amount Range", "Display Order", metric]].copy()
+        chart_frame = chart_frame.rename(columns={"Amount Range": "Amount Bucket", metric: "Value"})
+        chart_frame["Metric Title"] = title
+        total = chart_frame["Value"].sum()
+        chart_frame["Percentage"] = 0 if total == 0 else (chart_frame["Value"] / total) * 100
+        chart_frame["Percentage Tooltip"] = chart_frame["Percentage"].map(lambda value: f"{value:.1f}%")
+        chart_frame["Percentage Label"] = chart_frame["Percentage"].map(
+            lambda value: f"{value:.1f}%" if value >= 3 else ""
+        )
+        chart_frames.append(chart_frame)
+    chart_data = pd.concat(chart_frames, ignore_index=True)
+
+    def pie_panel(title: str, currency: bool) -> dict:
+        base_encoding = {
+            "theta": {"field": "Value", "type": "quantitative", "stack": True},
+            "color": {
+                "field": "Amount Bucket",
+                "type": "nominal",
+                "sort": bucket_order,
+                "scale": {"domain": bucket_order, "range": bucket_colors},
+                "legend": {"title": "Amount Bucket", "orient": "bottom", "columns": 5},
+            },
+            "order": {"field": "Display Order", "type": "ordinal"},
+        }
+        return {
+            "title": {"text": title, "anchor": "middle", "fontSize": 18, "fontWeight": 600, "offset": 16},
+            "width": 350,
+            "height": 330,
+            "transform": [{"filter": f"datum['Metric Title'] === '{title}'"}],
+            "layer": [
+                {
+                    "mark": {"type": "arc", "outerRadius": 126, "stroke": "#ffffff", "strokeWidth": 2},
+                    "encoding": {
+                        **base_encoding,
+                        "tooltip": [
+                            {"field": "Amount Bucket", "title": "Amount Bucket"},
+                            {"field": "Percentage Tooltip", "title": "Share"},
+                            {"field": "Value", "title": "Transaction amount" if currency else "Transactions", "format": "$,.2f" if currency else ",.0f"},
+                        ],
+                    },
+                },
+                {
+                    "mark": {"type": "text", "radius": 82, "fontSize": 12, "fontWeight": "bold", "color": "#1f2937"},
+                    "encoding": {
+                        "theta": {"field": "Value", "type": "quantitative", "stack": True},
+                        "order": {"field": "Display Order", "type": "ordinal"},
+                        "text": {"field": "Percentage Label", "type": "nominal"},
+                    },
+                },
+            ],
+        }
+
     return chart_data, {
-        "title": None,
-        "height": 315,
-        "padding": {"top": 10, "bottom": 10, "left": 32, "right": 32},
-        "autosize": {"type": "fit", "contains": "padding"},
-        "config": {"view": {"stroke": None}},
-        "layer": [
-            {
-                "mark": {"type": "arc", "outerRadius": 125, "stroke": "#ffffff", "strokeWidth": 2},
-                "encoding": {
-                    **pie_encoding,
-                    "tooltip": [
-                        {"field": "Amount Bucket", "title": "Amount Bucket"},
-                        {"field": "Percentage Label", "title": "Share"},
-                        {"field": metric, "title": metric, "format": "$,.2f" if currency else ",.0f"},
-                    ],
-                },
-            },
-            {
-                "mark": {"type": "text", "radius": 82, "fontSize": 12, "fontWeight": "bold", "color": "#1f2937"},
-                "encoding": {
-                    "theta": {"field": metric, "type": "quantitative", "stack": True},
-                    "order": {"field": "Display Order", "type": "ordinal"},
-                    "text": {"field": "Percentage Label", "type": "nominal"},
-                },
-            },
+        "hconcat": [
+            pie_panel("Transaction count by amount bucket", False),
+            pie_panel("Transaction amount by amount bucket", True),
         ],
+        "spacing": 56,
+        "resolve": {"legend": {"color": "shared"}},
+        "config": {"view": {"stroke": None}, "legend": {"labelFontSize": 13, "titleFontSize": 13}},
     }
 
 
@@ -444,24 +457,8 @@ with amount_tab:
     amount_chart = amount_summary.reset_index().rename(columns={"AMOUNT_RANGE": "Amount Range", "Transaction_Count": "Transaction Count", "Transaction_Amount": "Transaction Amount"})
     amount_chart["Amount Range"] = amount_summary.index.astype(str)
     amount_chart["Display Order"] = range(len(amount_chart))
-    first, second = st.columns(2)
-    with first:
-        st.markdown("##### Transaction count by amount bucket")
-        chart_data, chart_spec = amount_pie_chart(amount_chart, "Transaction Count", "Transaction count by amount bucket")
-        st.vega_lite_chart(chart_data, chart_spec, use_container_width=True)
-    with second:
-        st.markdown("##### Transaction amount by amount bucket")
-        chart_data, chart_spec = amount_pie_chart(amount_chart, "Transaction Amount", "Transaction amount by amount bucket", currency=True)
-        st.vega_lite_chart(chart_data, chart_spec, use_container_width=True)
-    st.markdown(
-        """<div class="amount-legend"><strong>Amount buckets:</strong>
-        <span><i style="background:#66c2a5"></i>Very Low</span>
-        <span><i style="background:#fc8d62"></i>Low</span>
-        <span><i style="background:#8da0cb"></i>Medium</span>
-        <span><i style="background:#e78ac3"></i>High</span>
-        <span><i style="background:#ffd92f"></i>Very High</span></div>""",
-        unsafe_allow_html=True,
-    )
+    chart_data, chart_spec = amount_pie_comparison_chart(amount_chart)
+    st.vega_lite_chart(chart_data, chart_spec, use_container_width=True)
     st.caption("Charts use amount-bucket labels. Hover for exact transaction counts and dollar amounts.")
     st.subheader("Amount Range Index")
     range_index = amount_summary.reset_index().rename(columns={"AMOUNT_RANGE": "Amount Bucket"})
