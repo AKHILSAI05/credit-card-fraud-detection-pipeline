@@ -34,6 +34,13 @@ st.markdown(
       .priority-low {border-left: 5px solid #16a34a;}
       .section-caption {color: #64748b; margin-bottom: .7rem;}
       div[data-testid="stMetric"] {background: #ffffff; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 12px;}
+      .amount-bucket-key {display: flex; justify-content: center; flex-wrap: wrap; gap: .65rem;
+                          margin: .35rem 0 .8rem;}
+      .amount-bucket-key span {display: inline-flex; align-items: center; gap: .45rem; padding: .4rem .62rem;
+                               border: 1px solid #334155; border-radius: 999px; background: #1e293b;
+                               color: #e2e8f0; font-size: .82rem; font-weight: 600; white-space: nowrap;}
+      .amount-bucket-key i {width: .92rem; height: .92rem; display: inline-block; border-radius: 3px;
+                             box-shadow: inset 0 0 0 1px rgba(255,255,255,.5);}
     </style>
     """,
     unsafe_allow_html=True,
@@ -168,20 +175,20 @@ def amount_pie_comparison_chart(data: pd.DataFrame) -> tuple[pd.DataFrame, dict]
                 "type": "nominal",
                 "sort": bucket_order,
                 "scale": {"domain": bucket_order, "range": bucket_colors},
-                "legend": {"title": "Amount Bucket", "orient": "bottom", "columns": 5},
+                "legend": None,
             },
             "order": {"field": "Display Order", "type": "ordinal"},
         }
         return {
             "title": {"text": title, "anchor": "middle", "fontSize": 18, "fontWeight": 600, "offset": 16},
-            "width": 350,
-            "height": 330,
+            "width": 330,
+            "height": 310,
             "transform": [{"filter": f"datum['Metric Title'] === '{title}'"}],
             "layer": [
                 {
                     "mark": {
                         "type": "arc",
-                        "outerRadius": 126,
+                        "outerRadius": 112,
                         "stroke": "#ffffff",
                         "strokeWidth": 1,
                     },
@@ -195,7 +202,7 @@ def amount_pie_comparison_chart(data: pd.DataFrame) -> tuple[pd.DataFrame, dict]
                     },
                 },
                 {
-                    "mark": {"type": "text", "radius": 82, "fontSize": 12, "fontWeight": "bold", "color": "#1f2937"},
+                    "mark": {"type": "text", "radius": 66, "fontSize": 12, "fontWeight": "bold", "color": "#1f2937"},
                     "encoding": {
                         "theta": {"field": "Value", "type": "quantitative", "stack": True},
                         "order": {"field": "Display Order", "type": "ordinal"},
@@ -210,9 +217,8 @@ def amount_pie_comparison_chart(data: pd.DataFrame) -> tuple[pd.DataFrame, dict]
             pie_panel("Transaction count by amount bucket", False),
             pie_panel("Transaction amount by amount bucket", True),
         ],
-        "spacing": 56,
-        "resolve": {"legend": {"color": "shared"}},
-        "config": {"view": {"stroke": None}, "legend": {"labelFontSize": 13, "titleFontSize": 13}},
+        "spacing": 38,
+        "config": {"view": {"stroke": None}},
     }
 
 
@@ -464,6 +470,16 @@ with amount_tab:
     amount_chart["Display Order"] = range(len(amount_chart))
     chart_data, chart_spec = amount_pie_comparison_chart(amount_chart)
     st.vega_lite_chart(chart_data, chart_spec, use_container_width=True)
+    st.markdown(
+        """<div class="amount-bucket-key">
+        <span><i style="background:#66c2a5"></i>Very Low</span>
+        <span><i style="background:#fc8d62"></i>Low</span>
+        <span><i style="background:#8da0cb"></i>Medium</span>
+        <span><i style="background:#e78ac3"></i>High</span>
+        <span><i style="background:#ffd92f"></i>Very High</span>
+        </div>""",
+        unsafe_allow_html=True,
+    )
     st.caption("Charts use amount-bucket labels. Hover for exact transaction counts and dollar amounts.")
     st.subheader("Amount Range Index")
     range_index = amount_summary.reset_index().rename(columns={"AMOUNT_RANGE": "Amount Bucket"})
